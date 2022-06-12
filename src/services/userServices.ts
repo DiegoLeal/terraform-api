@@ -1,39 +1,28 @@
-import { Prisma } from '@prisma/client';
-import {
-	findByUserName,
-	findUserById,
-	saveUser,
-} from '../repository/userRepository';
-import { UserType } from '../types/User';
-import { notFoundException } from '../utils/exceptions/notFoundException';
+import bcrypt from 'bcrypt'
+import { User } from '@prisma/client'
+import { userRepository } from '../repository/userRepository'
+import * as error from '../utils/exceptions/errorUtils'
 
-const userRegister = async (user: UserType) => {
-	try {
-		const userExists = await findByUserName(user.name);
+export type CreateUser = Omit<User, 'id'>
 
-		if (!user.name || !user.course || !user.period) {
-			throw new Error('Preencha todos os campos!');
-		}
+async function createUser(user: CreateUser) {
+	const { username, password } = user
 
-		if (userExists) {
-			throw new Error('Usuário já cadastrado!');
-		}
-
-		const registered = await saveUser(user);
-		return registered;
-	} catch (e) {
-		throw new Error(e.message);
+	const isUsernameTaken = await userRepository.findByUsername(username)
+	if (isUsernameTaken) {
+		throw error.conflict('This username is already taken')
 	}
-};
 
-const userFindById = async (id) => {
-	try {
-		const user = await findUserById(id);
-		if (!user) throw new Error(notFoundException('usuário'));
-		return user;
-	} catch (e) {
-		throw new Error();
-	}
-};
+	const hashedPassword = bcrypt.hashSync(password, 10)
 
-export { userFindById, userRegister };
+	await userRepository.create({ ...user, password: hashedPassword })
+}
+
+async function findById(id: number) {
+	return await userRepository.findById(id)
+}
+
+export const userService = {
+	createUser,
+	findById
+}

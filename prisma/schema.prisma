@@ -10,11 +10,58 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
-  id  Int @id @default(autoincrement())
-  name String @unique
-  course String
-  period String
+model User {
+  id         Int          @id @default(autoincrement())
+  username   String       @unique
+  password   String
+  pictureUrl String
+  userEvents userEvents[]
 
+  List List[]
   @@map("users")
+}
+
+model Event {
+  tmdbId     Int          @id
+  title      String
+  posterPath String
+  userEvents userEvents[]
+
+  listEvents ListEvents[]
+
+  @@map("Events")
+}
+
+model userEvents {
+  id        Int     @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  favorite  Boolean @default(false)
+  watched   Boolean @default(false)
+  watchlist Boolean @default(false)
+  events    Event   @relation(fields: [eventId], references: [tmdbId])
+  users     User    @relation(fields: [userId], references: [id])
+
+  @@map("usersEvents")
+}
+
+model List {
+  id     Int    @id @default(autoincrement())
+  name   String
+  userId Int
+  users  User   @relation(fields: [userId], references: [id])
+
+  listEvents ListEvents[]
+
+  @@map("lists")
+}
+
+model ListEvents {
+  id      Int   @id @default(autoincrement())
+  listId  Int
+  lists   List  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  eventId Int
+  events  Event @relation(fields: [eventId], references: [tmdbId])
+
+  @@map("listEvents")
 }

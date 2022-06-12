@@ -1,29 +1,13 @@
-import { Router } from 'express';
-import {
-	userFindById,
-	userRegister,
-} from '../services/userServices';
+import { Request, Response } from 'express'
+import { userService } from '../services/userServices'
+import { eventService } from '../services/eventService'
 
-const userRouter = Router();
+async function signUp(req: Request, res: Response) {
+	await userService.createUser(req.body)
 
-userRouter.post('/register', async (req, res) => {
-	try {
-		await userRegister(req.body);
-		res.status(201).json({ sucesso: 'Usuário cadastrado com Sucesso' });
-	} catch (err) {
-		const e = err as Error;
-		res.status(400).json({ error: e.message });
-	}
-});
+	res.sendStatus(201)
+}
 
-userRouter.get('/:id', async (req, res) => {
-	try {
-		const user = await userFindById(req.params.id);
-		res.status(200).json({ user: user });
-	} catch (err) {
-		const e = err as Error;
-		res.status(400).json({ error: e.message });
-	}
-});
-
-export { userRouter };
+export const userController = {
+	signUp
+}
